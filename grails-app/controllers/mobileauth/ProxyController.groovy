@@ -11,6 +11,15 @@ class ProxyController {
 
   def groupService
 
+  def image = {
+      def url = ("http://bie.ala.org.au/ws/species/image/"+ params.imageType + "/" + params.guid).toURL()
+      response.setContentType("image/jpeg")
+      def out = response.getOutputStream()
+      out.write(url.getBytes())
+      out.flush()
+      out.close()
+  }
+
   def geocode = {
     def url = ("http://maps.googleapis.com/maps/api/geocode/json?sensor=true&latlng=" + params.latlng).toURL()
     response.setContentType("application/json")
@@ -72,7 +81,7 @@ class ProxyController {
   }
 
   def occurrenceSearch = {
-    def url = ("http://biocache.ala.org.au/ws/occurrences/search?q="+params.q+"&fq=geospatial_kosher%3Atrue&facets="+params.facets+"&lat=" + params.lat+ "&lon="+params.lon + "&radius="+params.radius + "&start="+ params.start + "&pageSize="+params.pageSize + '&fsort=index').toURL()
+    def url = ("http://biocache.ala.org.au/ws/occurrences/search?q="+params.q+"&fq=geospatial_kosher%3Atrue&facets="+params.facets+"&lat=" + params.lat+ "&lon="+params.lon + "&radius="+params.radius + "&start="+ params.start + "&pageSize="+params.pageSize + '&fsort=index&flimit=300').toURL()
     response.setContentType("application/json")
     render url.getText()
   }
