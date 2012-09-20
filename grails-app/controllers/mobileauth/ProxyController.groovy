@@ -39,7 +39,7 @@ class ProxyController {
   }
 
   def search = {
-    def url = ("http://bie.ala.org.au/search.json?fq="+params.fq+"&pageSize="+params.pageSize+"&q="+params.q).toURL()
+    def url = ("http://bie.ala.org.au/ws/search.json?fq="+params.fq+"&pageSize="+params.pageSize+"&q="+params.q).toURL()
     response.setContentType("application/json")
     render url.getText()
   }
@@ -63,13 +63,13 @@ class ProxyController {
     def result = slurper.parseText(url.getText())
     def guids = result.collect { x -> x.guid }
 
-    // do a HTTP POST to http://bie.ala.org.au/species/bulklookup with a JSON Array body
+    // do a HTTP POST to http://bie.ala.org.au/ws/species/bulklookup with a JSON Array body
     def jsonOutput = new JsonOutput()
     def jsonBody = jsonOutput.toJson(guids)
 
     //do the http POST
     HttpClient http = new DefaultHttpClient()
-    HttpPost post = new HttpPost("http://bie.ala.org.au/species/guids/bulklookup.json")
+    HttpPost post = new HttpPost("http://bie.ala.org.au/ws/species/guids/bulklookup.json")
     post.setEntity(new StringEntity(jsonBody))
     def queryResponse = http.execute(post)
     def responseAsString = null
@@ -201,7 +201,7 @@ class ProxyController {
         }
         //classesForCrustacea
         crustaceanGrouped.each() { groupName, groupList ->
-          println("########### rendering: " + groupName)
+          //println("########### rendering: " + groupName)
           def groupListSorted = groupList.sort { groupService.getCommonName(it.label)}
           if(groupName != null){
             speciesGroup(
@@ -222,7 +222,7 @@ class ProxyController {
 
         //groups
         groupsGrouped.each() { groupName, groupList ->
-          println("########### rendering: " + groupName)
+          //println("########### rendering: " + groupName)
           def groupListSorted = groupList.sort { groupService.getCommonName(it.label)}
           if(groupName != null){
             speciesGroup(
