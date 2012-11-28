@@ -15,7 +15,12 @@ class ProxyController {
       def url = ("http://bie.ala.org.au/ws/species/image/"+ params.imageType + "/" + params.guid).toURL()
       response.setContentType("image/jpeg")
       def out = response.getOutputStream()
-      out.write(url.getBytes())
+      url.getBytes()
+      try {
+        out.write(url.getBytes())
+      } catch (Exception e){
+        out.write("http://bie.ala.org.au/ws/static/images/noImage.jpg".toURL().getBytes())
+      }
       out.flush()
       out.close()
   }
@@ -39,7 +44,7 @@ class ProxyController {
   }
 
   def search = {
-    def url = ("http://bie.ala.org.au/ws/search.json?fq="+params.fq+"&pageSize="+params.pageSize+"&q="+params.q).toURL()
+    def url = ("http://bie.ala.org.au/search.json?fq="+params.fq+"&pageSize="+params.pageSize+"&q="+params.q).toURL()
     response.setContentType("application/json")
     render url.getText()
   }
@@ -63,13 +68,13 @@ class ProxyController {
     def result = slurper.parseText(url.getText())
     def guids = result.collect { x -> x.guid }
 
-    // do a HTTP POST to http://bie.ala.org.au/ws/species/bulklookup with a JSON Array body
+    // do a HTTP POST to http://bie.ala.org.au/species/bulklookup with a JSON Array body
     def jsonOutput = new JsonOutput()
     def jsonBody = jsonOutput.toJson(guids)
 
     //do the http POST
     HttpClient http = new DefaultHttpClient()
-    HttpPost post = new HttpPost("http://bie.ala.org.au/ws/species/guids/bulklookup.json")
+    HttpPost post = new HttpPost("http://bie.ala.org.au/species/guids/bulklookup.json")
     post.setEntity(new StringEntity(jsonBody))
     def queryResponse = http.execute(post)
     def responseAsString = null
@@ -112,7 +117,7 @@ class ProxyController {
 
     def speciesGroups = ("http://biocache.ala.org.au/ws/occurrences/search?q=kingdom:Plantae%20OR%20kingdom:Fungi&fq=geospatial_kosher%3Atrue&facets=species_group&lat=" + params.lat+ "&lon="+params.lon + "&radius="+params.radius + "&start=0&pageSize=0").toURL()
 
-    println("#####Species Group URL: " + speciesGroups.toString())
+//    println("#####Species Group URL: " + speciesGroups.toString())
 
     def timeit = { String message, Closure cl ->
       def startTime = System.currentTimeMillis()
@@ -127,11 +132,48 @@ class ProxyController {
     def jsonSpeciesGroups = null
     def jsonCrustaeans = null
 
-    timeit("get orders"){ jsonOrders = jsonSlurper.parseText(orders.getText())?.facetResults[0]?.fieldResult }
-    timeit("get families") { jsonFamilies = jsonSlurper.parseText(familiesForAmphibians.getText())?.facetResults[0]?.fieldResult }
-    timeit("get classes") { jsonClasses = jsonSlurper.parseText(classesForMolluscs.getText())?.facetResults[0]?.fieldResult }
-    timeit("get speciesgroups") { jsonSpeciesGroups = jsonSlurper.parseText(speciesGroups.getText())?.facetResults[0]?.fieldResult }
-    timeit("get crustaceans") { jsonCrustaeans = jsonSlurper.parseText(classesForCrustacea.getText())?.facetResults[0]?.fieldResult }
+    timeit("get orders"){
+        if(orders != null){
+            jsonOrders = jsonSlurper.parseText(orders.getText())?.facetResults[0]?.fieldResult
+        } else {
+            jsonOrders = []
+        }
+    }
+    timeit("get families") {
+        if(familiesForAmphibians != null){
+            jsonFamilies = jsonSlurper.parseText(familiesForAmphibians.getText())?.facetResults[0]?.fieldResult
+        } else {
+            jsonFamilies = []
+        }
+    }
+    timeit("get classes") {
+        if(classesForMolluscs !=null){
+            jsonClasses = jsonSlurper.parseText(classesForMolluscs.getText())?.facetResults[0]?.fieldResult
+        } else {
+            jsonClasses = []
+        }
+    }
+    timeit("get speciesgroups") {
+        if(speciesGroups!=null){
+            jsonSpeciesGroups = jsonSlurper.parseText(speciesGroups.getText())?.facetResults[0]?.fieldResult
+        } else {
+           jsonSpeciesGroups = []
+        }
+    }
+    timeit("get crustaceans") {
+        if(classesForCrustacea !=null){
+            jsonCrustaeans = jsonSlurper.parseText(classesForCrustacea.getText())?.facetResults[0]?.fieldResult
+        } else {
+           jsonCrustaeans = []
+        }
+    }
+
+    if (jsonOrders ==null) jsonOrders = []
+    if (jsonFamilies ==null) jsonFamilies = []
+    if (jsonClasses ==null) jsonClasses = []
+    if (jsonSpeciesGroups ==null) jsonSpeciesGroups = []
+    if (jsonCrustaeans ==null) jsonCrustaeans = []
+
 
     //group the orders by species group
     def ordersGrouped = jsonOrders.groupBy { groupService.getTaxonToSpeciesGroup(it.label) }
@@ -201,28 +243,27 @@ class ProxyController {
         }
         //classesForCrustacea
         crustaceanGrouped.each() { groupName, groupList ->
-          //println("########### rendering: " + groupName)
+          println("########### rendering: " + groupName)
           def groupListSorted = groupList.sort { groupService.getCommonName(it.label)}
           if(groupName != null){
             speciesGroup(
-                    groupName: groupName ? groupName : 'Other',
-                    facetName: 'class',
-                    groups: array {
-                      for (group in groupListSorted) {
-                        speciesGroup(
-                                commonName: groupService.getCommonName(group.label),
-                                scientificName: group.label,
-                                recordCount: group.count
-                        )
-                      }
-                    }
+                groupName: groupName ? groupName : 'Other',
+                facetName: 'class',
+                groups: array {
+                  for (group in groupListSorted) {
+                    speciesGroup(
+                            commonName: groupService.getCommonName(group.label),
+                            scientificName: group.label,
+                            recordCount: group.count
+                    )
+                  }
+                }
             )
           }
         }
-
         //groups
         groupsGrouped.each() { groupName, groupList ->
-          //println("########### rendering: " + groupName)
+          println("########### rendering: " + groupName)
           def groupListSorted = groupList.sort { groupService.getCommonName(it.label)}
           if(groupName != null){
             speciesGroup(
