@@ -16,14 +16,12 @@ class MobileKeyController {
      * this user.
      */
     def generateKey = {
-        println("Authenticate request received.....")
-
+        //println("Authenticate request received.....")
         try {
-
             HttpClient http = new DefaultHttpClient()
             HttpPost post = new HttpPost("https://auth.ala.org.au/cas/v1/tickets")
             String userName = params.userName.toString().toLowerCase()
-            println("userName: " + userName + ", password: " + params.password)
+          //  println("userName: " + userName + ", password: " + params.password)
             List<NameValuePair> nvps = new ArrayList<NameValuePair>();
             nvps.add(new BasicNameValuePair("username", userName));
             nvps.add(new BasicNameValuePair("password", params.password));
@@ -31,11 +29,11 @@ class MobileKeyController {
 
             def alaAuthResponse = http.execute(post)
             int statusCode = alaAuthResponse.getStatusLine().getStatusCode();
-            println("CAS response: " + statusCode)
-            println(alaAuthResponse.getStatusLine().getReasonPhrase());
+            //println("CAS response: " + statusCode)
+          //  println(alaAuthResponse.getStatusLine().getReasonPhrase());
             if (statusCode == 201) {
                 //persist the key
-                println("Sending a 201 to client.....")
+               // println("Sending a 201 to client.....")
                 String authKey = UUID.randomUUID().toString()
                 //add the user and auth key
                 MobileUser user = MobileUser.findByUserName(userName)
@@ -46,7 +44,7 @@ class MobileKeyController {
                 (new AuthKey([mobileUser: user, key: authKey])).save(flush: true)
                 [authKey: authKey]
             } else {
-                println("Sending a error.....")
+                //println("Sending a error.....")
                 response.sendError(400)
             }
 
@@ -60,13 +58,13 @@ class MobileKeyController {
        */
     def checkKey = {
         //check the user, check the auth key
-        println("Check record for...." + params.userName + " with key " + params.authKey)
+        //println("Check record for...." + params.userName + " with key " + params.authKey)
         MobileUser user = MobileUser.findByUserName(params.userName)
-        println(user)
+       // println(user)
 
         AuthKey authKey = AuthKey.findByKeyAndMobileUser(params.authKey, user)
         if (authKey == null) {
-            println("Unable to add an observation.")
+         //   println("Unable to add an observation.")
             response.sendError(403)
         }
     }

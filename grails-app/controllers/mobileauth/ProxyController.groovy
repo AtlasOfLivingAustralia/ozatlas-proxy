@@ -6,10 +6,87 @@ import org.apache.http.client.HttpClient
 import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
+import org.apache.http.client.ClientProtocolException
+import org.apache.http.entity.mime.MultipartEntity
+import org.apache.http.entity.mime.content.ByteArrayBody
+import org.apache.http.entity.mime.content.StringBody
+import org.apache.http.HttpResponse
+import org.springframework.web.multipart.MultipartHttpServletRequest
+import org.springframework.web.multipart.MultipartFile
+import org.apache.commons.io.IOUtils
+import org.apache.http.params.HttpParams
+import org.apache.http.params.BasicHttpParams
+import org.apache.http.NameValuePair
+import org.apache.http.message.BasicNameValuePair
+import org.apache.http.client.entity.UrlEncodedFormEntity
+import grails.converters.JSON
 
 class ProxyController {
 
+  def grailsApplication
+
   def groupService
+
+  def submitRecord(){
+    log.info("Request received. Proxying to fielddata")
+    def parameterMap = request.getParameterMap()
+
+    //do the http POST
+    HttpClient http = new DefaultHttpClient()
+    HttpPost post = new HttpPost(grailsApplication.config.submitRecordUrl)
+    def nameValuePairs = new ArrayList<NameValuePair>();
+    parameterMap.each {k, v ->
+        if (v) {
+            log.debug "Params: ${k}:${v[0]}"
+            nameValuePairs.add(new BasicNameValuePair(k, v[0]))
+        }
+    }
+    post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+    def queryResponse = http.execute(post)
+    log.info("Query response: " + queryResponse.getStatusLine().getStatusCode())
+    response.setStatus(queryResponse.getStatusLine().getStatusCode())
+    render (contentType: "application/json", text: [success: true] as JSON)
+  }
+
+  def submitRecordMultipart(){
+    log.info("Multipart request received. Proxying to fielddata")
+    HttpPost post = new HttpPost(grailsApplication.config.submitMultipartRecordUrl);
+
+    def parameterMap = request.getParameterMap()
+    def nameValuePairs = new ArrayList<NameValuePair>();
+    parameterMap.each {k, v ->
+        if (v) {
+            log.debug "Params: ${k}:${v[0]}"
+            nameValuePairs.add(new BasicNameValuePair(k, v[0]))
+        }
+    }
+    post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+    if(request instanceof MultipartHttpServletRequest){
+        Map<String, MultipartFile> fileMap = request.getFileMap()
+        if (fileMap.containsKey("attribute_file_1")) {
+            MultipartFile multipartFile = fileMap.get("attribute_file_1")
+            MultipartEntity entity = new MultipartEntity()
+            ByteArrayBody body = new ByteArrayBody(multipartFile.getBytes(), multipartFile.getOriginalFilename())
+            entity.addPart("attribute_file_1", body);
+            post.setEntity(entity);
+            post.set
+        }
+    }
+
+    HttpClient client = new DefaultHttpClient();
+    HttpResponse httpResponse = null;
+    try {
+        httpResponse = client.execute(post);
+        response.setStatus(httpResponse.getStatusLine().getStatusCode())
+        render (contentType: "application/json", text: [success: true] as JSON)
+    } catch (Exception e) {
+        log.error(e.getMessage(), e)
+        response.setStatus(500)
+        render (contentType: "application/json", text: [success: false] as JSON)
+    }
+  }
 
   def image = {
       def url = ("http://bie.ala.org.au/ws/species/image/"+ params.imageType + "/" + params.guid).toURL()
@@ -243,7 +320,7 @@ class ProxyController {
         }
         //classesForCrustacea
         crustaceanGrouped.each() { groupName, groupList ->
-          println("########### rendering: " + groupName)
+      //    println("########### rendering: " + groupName)
           def groupListSorted = groupList.sort { groupService.getCommonName(it.label)}
           if(groupName != null){
             speciesGroup(
@@ -263,7 +340,7 @@ class ProxyController {
         }
         //groups
         groupsGrouped.each() { groupName, groupList ->
-          println("########### rendering: " + groupName)
+     //     println("########### rendering: " + groupName)
           def groupListSorted = groupList.sort { groupService.getCommonName(it.label)}
           if(groupName != null){
             speciesGroup(

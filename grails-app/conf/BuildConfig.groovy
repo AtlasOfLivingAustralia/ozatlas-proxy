@@ -42,6 +42,7 @@ grails.project.dependency.resolution = {
         build 'org.apache.httpcomponents:httpclient:4.1.2'
         runtime 'org.apache.httpcomponents:httpcore:4.1.2'
         runtime 'org.apache.httpcomponents:httpclient:4.1.2'
+        runtime 'org.apache.httpcomponents:httpmime:4.1.2'
         build 'org.apache.commons:commons-lang3:3.1'
         runtime 'org.apache.commons:commons-lang3:3.1'
     }
