@@ -10,8 +10,8 @@
 //    grails.config.locations << "file:" + System.properties["${appName}.config.location"]
 // }
 
-submitRecordUrl = "http://fielddata.ala.org.au:8080/mobile/submitRecord"
-submitMultipartRecordUrl ="http://fielddata.ala.org.au:8080/mobile/submitRecordMultipart"
+submitRecordUrl = "http://fielddata.ala.org.au/mobile/submitRecord"
+submitMultipartRecordUrl ="http://fielddata.ala.org.au/mobile/submitRecordMultipart"
 
 grails.project.groupId = appName // change this to alter the default package name and Maven publishing destination
 grails.mime.file.extensions = true // enables the parsing of file extensions from URLs into the request format
