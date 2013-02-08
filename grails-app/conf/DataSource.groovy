@@ -26,7 +26,7 @@ environments {
     }
     production {
         dataSource {
-            dbCreate = "create"
+            dbCreate = "update"
             driverClassName = "com.mysql.jdbc.Driver"
             url = "jdbc:mysql://ala-biedb1.vm.csiro.au/mobileauth"
 		    username = "mobileauth"
