@@ -46,7 +46,7 @@ class ProxyController {
     def queryResponse = http.execute(post)
     log.info("Query response: " + queryResponse.getStatusLine().getStatusCode())
     response.setStatus(queryResponse.getStatusLine().getStatusCode())
-    render (contentType: "application/json", text: [success: true] as JSON)
+    render (contentType: "application/json", text: [success: queryResponse.getStatusLine().getStatusCode() == 200] as JSON)
   }
 
   def submitRecordMultipart(){
@@ -80,7 +80,7 @@ class ProxyController {
     try {
         httpResponse = client.execute(post);
         response.setStatus(httpResponse.getStatusLine().getStatusCode())
-        render (contentType: "application/json", text: [success: true] as JSON)
+        render (contentType: "application/json", text: [success: httpResponse.getStatusLine().getStatusCode() == 200] as JSON)
     } catch (Exception e) {
         log.error(e.getMessage(), e)
         response.setStatus(500)
@@ -96,7 +96,7 @@ class ProxyController {
       try {
         out.write(url.getBytes())
       } catch (Exception e){
-        out.write("http://bie.ala.org.au/ws/static/images/noImage.jpg".toURL().getBytes())
+        out.write("http://bie.ala.org.au/images/noImage85.jpg".toURL().getBytes())
       }
       out.flush()
       out.close()

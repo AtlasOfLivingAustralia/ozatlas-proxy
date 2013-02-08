@@ -16,12 +16,11 @@ class MobileKeyController {
      * this user.
      */
     def generateKey = {
-        //println("Authenticate request received.....")
+        log.info("Authenticate request received for....." +params.userName)
         try {
             HttpClient http = new DefaultHttpClient()
             HttpPost post = new HttpPost("https://auth.ala.org.au/cas/v1/tickets")
             String userName = params.userName.toString().toLowerCase()
-          //  println("userName: " + userName + ", password: " + params.password)
             List<NameValuePair> nvps = new ArrayList<NameValuePair>();
             nvps.add(new BasicNameValuePair("username", userName));
             nvps.add(new BasicNameValuePair("password", params.password));
@@ -44,12 +43,10 @@ class MobileKeyController {
                 (new AuthKey([mobileUser: user, key: authKey])).save(flush: true)
                 [authKey: authKey]
             } else {
-                //println("Sending a error.....")
                 response.sendError(400)
             }
-
         } catch (Exception ex) {
-            ex.printStackTrace();
+            log.error(ex.getMessage(),ex);
         }
     }
 
@@ -58,6 +55,7 @@ class MobileKeyController {
        */
     def checkKey = {
         //check the user, check the auth key
+        log.info("Check key request received for....." +params.userName + ", key: " + params.authKey)
         //println("Check record for...." + params.userName + " with key " + params.authKey)
         MobileUser user = MobileUser.findByUserName(params.userName)
        // println(user)
@@ -65,6 +63,7 @@ class MobileKeyController {
         AuthKey authKey = AuthKey.findByKeyAndMobileUser(params.authKey, user)
         if (authKey == null) {
          //   println("Unable to add an observation.")
+            log.info("Sending error for check key requets. Key combination not recognised")
             response.sendError(403)
         }
     }
