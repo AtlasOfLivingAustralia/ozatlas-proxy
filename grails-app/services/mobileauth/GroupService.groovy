@@ -1,28 +1,39 @@
 package mobileauth
 
 import groovy.json.JsonSlurper
+import org.springframework.beans.factory.InitializingBean
 
-class GroupService {
+class GroupService implements InitializingBean {
 
   def serviceMethod() {}
 
   def groupMap = [:]
   def scientificNameToCommonName = [:]
+  def commonNameToScientificName = [:]
+  def commonNameToGroup = [:]
 
-  def getTaxonToSpeciesGroup(String taxonName) {
-    if(groupMap.isEmpty()){
-      //populate the map
+  public void afterPropertiesSet() throws Exception {
       speciesGroups.each { group ->
+
+        Group newGroup = new Group([groupName:group.speciesGroup, facetName:group.taxonRank])
+
         group.taxa.each { taxon ->
           println(taxon.name + " => " + taxon.common)
 
           groupMap[taxon.name.trim().toLowerCase()] = group.speciesGroup.trim()
           scientificNameToCommonName[taxon.name.trim().toLowerCase()] = taxon.common.trim()
+          commonNameToScientificName[taxon.common.trim()] = taxon.name.trim()
+          commonNameToGroup.put(taxon.common.trim(), newGroup)
         }
       }
-    }
-    //println("Group maps size: " + groupMap.size())
+  }
+
+  def getTaxonToSpeciesGroup(String taxonName) {
     groupMap.get(taxonName.toLowerCase())
+  }
+
+  def getGroupForCommonName(String commonName){
+      commonNameToGroup.get(commonName.trim())
   }
 
   def getCommonName(String taxonName){
@@ -73,7 +84,7 @@ class GroupService {
 {"name":"SPHENISCIFORMES","common":"Penguins"},
 {"name":"STRIGIFORMES","common":"Owls"},
 {"name":"STRUTHIONIFORMES","common":"Ostriches"},
-{"name":"TURNICIFORMES","common":" Buttonquails"}
+{"name":"TURNICIFORMES","common":"Buttonquails"}
 ]
 },
 {
@@ -149,7 +160,7 @@ class GroupService {
 {"name":"TORPEDINIFORMES","common":"Electric Rays"},
 {"name":"CHIMAERIFORMES","common":"Chimaeras"},
 {"name":"CERATODONTIFORMES","common":"Lungfish"},
-{"name":"CLUPEIFORMES","common":"Anchovies "},
+{"name":"CLUPEIFORMES","common":"Anchovies"},
 {"name":"ALBULIFORMES","common":"Bonefishes"},
 {"name":"ANGUILLIFORMES","common":"Eels"},
 {"name":"ELOPIFORMES","common":"Tarpons"},

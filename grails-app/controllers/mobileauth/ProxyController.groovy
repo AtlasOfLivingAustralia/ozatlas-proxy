@@ -71,7 +71,6 @@ class ProxyController {
             ByteArrayBody body = new ByteArrayBody(multipartFile.getBytes(), multipartFile.getOriginalFilename())
             entity.addPart("attribute_file_1", body);
             post.setEntity(entity);
-            post.set
         }
     }
 
@@ -89,17 +88,18 @@ class ProxyController {
   }
 
   def image = {
-      def url = ("http://bie.ala.org.au/ws/species/image/"+ params.imageType + "/" + params.guid).toURL()
-      response.setContentType("image/jpeg")
       def out = response.getOutputStream()
-      url.getBytes()
       try {
+        def url = ("http://bie.ala.org.au/ws/species/image/"+ params.imageType + "/" + params.guid).toURL()
+        url.getBytes()
         out.write(url.getBytes())
+        out.flush()
       } catch (Exception e){
-        out.write("http://bie.ala.org.au/images/noImage85.jpg".toURL().getBytes())
+//        out.write("http://bie.ala.org.au/images/noImage85.jpg".toURL().getBytes())
+          response.sendRedirect(grailsApplication.config.grails.serverURL + "/images/noImage85.jpg")
+      } finally {
+        out.close()
       }
-      out.flush()
-      out.close()
   }
 
   def geocode = {
@@ -178,187 +178,84 @@ class ProxyController {
     render url.getText()
   }
 
+  def exploreSubgroup = {
+    def fullUrl = "http://biocache.ala.org.au/ws/occurrences/search?q=*:*&lat=" + params.lat+ "&lon=" + params.lon + "&radius=" + params.radius + "&pageSize=0&facets=species_guid&flimit=2000&fq=species_subgroup:" + URLEncoder.encode(params.subgroup, "UTF-8")
+    println fullUrl
+    def url = (fullUrl).toURL()
+    def slurper = new JsonSlurper()
+    def result = slurper.parseText(url.getText())
+
+    def speciesGroups = result.facetResults[0].fieldResult
+    def names = []
+    def countLookup = [:]
+    speciesGroups.each {
+        names << it.label
+        countLookup.put(it.label, it.count)
+    }
+
+    //do the http POST
+    def jsonOutput = new JsonOutput()
+    def jsonBody = jsonOutput.toJson(names)
+    HttpClient http = new DefaultHttpClient()
+    HttpPost post = new HttpPost("http://bie.ala.org.au/species/guids/bulklookup.json")
+    post.setEntity(new StringEntity(jsonBody))
+    def queryResponse = http.execute(post)
+    def responseAsString = null
+    queryResponse.getEntity().getContent().withReader { rdr -> responseAsString = rdr.readLines().join() }
+
+    def results = slurper.parseText(responseAsString)
+    results.searchDTOList.each { it.put('recordCount',countLookup.get(it.guid)) }
+
+    //use the bulk lookup to convert to names and text
+    response.setContentType("application/json")
+    render(contentType: "text/json") { results.searchDTOList }
+  }
+
+  /**
+   * Biocache query and organisation by higher level groups
+   */
   def searchByMultiRanks = {
+    def url = ("http://biocache.ala.org.au/ws/occurrences/search?q=*:*&fq=geospatial_kosher%3Atrue&facets=species_subgroup&lat=" + params.lat+ "&lon=" + params.lon + "&radius=" + params.radius + "&pageSize=0&flimit=1000").toURL()
+    response.setContentType("application/json")
+    def slurper = new JsonSlurper()
+    def result = slurper.parseText(url.getText())
+    def speciesGroups = result.facetResults[0].fieldResult
 
-    def jsonSlurper = new JsonSlurper()
+    def fullResults = [:]
 
-    def orders = ("http://biocache.ala.org.au/ws/occurrences/search?q=*:*&fq=geospatial_kosher%3Atrue&facets=order&lat=" + params.lat+ "&lon="+params.lon + "&radius="+params.radius + "&start=0&pageSize=0&flimit=867").toURL()
+    speciesGroups.each { sg ->
+        def group = groupService.getGroupForCommonName(sg.label.trim())
 
-  //  println("Order URL : " + orders.toString())
-
-    def familiesForAmphibians = ("http://biocache.ala.org.au/ws/occurrences/search?q=class:AMPHIBIA&fq=geospatial_kosher%3Atrue&facets=family&lat=" + params.lat+ "&lon="+params.lon + "&radius="+params.radius + "&start=0&pageSize=0").toURL()
-
-    def classesForMolluscs = ("http://biocache.ala.org.au/ws/occurrences/search?q=phylum:MOLLUSCA&fq=geospatial_kosher%3Atrue&facets=class&lat=" + params.lat+ "&lon="+params.lon + "&radius="+params.radius + "&start=0&pageSize=0").toURL()
-
-    def classesForCrustacea = ("http://biocache.ala.org.au/ws/occurrences/search?q=species_group:Crustaceans&fq=geospatial_kosher%3Atrue&facets=class&lat=" + params.lat+ "&lon="+params.lon + "&radius="+params.radius + "&start=0&pageSize=0").toURL()
-
-    def speciesGroups = ("http://biocache.ala.org.au/ws/occurrences/search?q=kingdom:Plantae%20OR%20kingdom:Fungi&fq=geospatial_kosher%3Atrue&facets=species_group&lat=" + params.lat+ "&lon="+params.lon + "&radius="+params.radius + "&start=0&pageSize=0").toURL()
-
-//    println("#####Species Group URL: " + speciesGroups.toString())
-
-    def timeit = { String message, Closure cl ->
-      def startTime = System.currentTimeMillis()
-      cl()
-      def deltaTime = System.currentTimeMillis() - startTime
-     // println "$message \ttime: $deltaTime"
-    }
-
-    def jsonOrders = null
-    def jsonFamilies = null
-    def jsonClasses = null
-    def jsonSpeciesGroups = null
-    def jsonCrustaeans = null
-
-    timeit("get orders"){
-        if(orders != null){
-            jsonOrders = jsonSlurper.parseText(orders.getText())?.facetResults[0]?.fieldResult
+        def storedGroupTaxa = fullResults.get(group)
+        if (storedGroupTaxa == null){
+            storedGroupTaxa = [sg]
+            if(group != null)
+                fullResults.put(group, storedGroupTaxa)
         } else {
-            jsonOrders = []
-        }
-    }
-    timeit("get families") {
-        if(familiesForAmphibians != null){
-            jsonFamilies = jsonSlurper.parseText(familiesForAmphibians.getText())?.facetResults[0]?.fieldResult
-        } else {
-            jsonFamilies = []
-        }
-    }
-    timeit("get classes") {
-        if(classesForMolluscs !=null){
-            jsonClasses = jsonSlurper.parseText(classesForMolluscs.getText())?.facetResults[0]?.fieldResult
-        } else {
-            jsonClasses = []
-        }
-    }
-    timeit("get speciesgroups") {
-        if(speciesGroups!=null){
-            jsonSpeciesGroups = jsonSlurper.parseText(speciesGroups.getText())?.facetResults[0]?.fieldResult
-        } else {
-           jsonSpeciesGroups = []
-        }
-    }
-    timeit("get crustaceans") {
-        if(classesForCrustacea !=null){
-            jsonCrustaeans = jsonSlurper.parseText(classesForCrustacea.getText())?.facetResults[0]?.fieldResult
-        } else {
-           jsonCrustaeans = []
+           storedGroupTaxa.add(sg)
         }
     }
 
-    if (jsonOrders ==null) jsonOrders = []
-    if (jsonFamilies ==null) jsonFamilies = []
-    if (jsonClasses ==null) jsonClasses = []
-    if (jsonSpeciesGroups ==null) jsonSpeciesGroups = []
-    if (jsonCrustaeans ==null) jsonCrustaeans = []
-
-
-    //group the orders by species group
-    def ordersGrouped = jsonOrders.groupBy { groupService.getTaxonToSpeciesGroup(it.label) }
-    def familiesGrouped = jsonFamilies.groupBy { groupService.getTaxonToSpeciesGroup(it.label) }
-    def classesGrouped = jsonClasses.groupBy { groupService.getTaxonToSpeciesGroup(it.label) }
-    def crustaceanGrouped = jsonCrustaeans.groupBy { groupService.getTaxonToSpeciesGroup(it.label) }
-    def groupsGrouped = jsonSpeciesGroups.groupBy { groupService.getTaxonToSpeciesGroup(it.label) }
-
-    //render the JSON
     render(contentType: "text/json") {
       speciesGroups = array {
-        ordersGrouped.each() { groupName, groupList ->
-          def groupListSorted = groupList.sort { groupService.getCommonName(it.label)}
-          if(groupName != null){
-            speciesGroup(
-              groupName: groupName ? groupName : 'Other',
-              facetName: 'order',
-              groups: array {
-                for (group in groupListSorted) {
-                  speciesGroup(
-                    commonName: groupService.getCommonName(group.label),
-                    scientificName: group.label,
-                    recordCount: group.count
-                  )
-                }
-              }
-            )
-          }
-        }
-        //families
-        familiesGrouped.each() { groupName, groupList ->
-          def groupListSorted = groupList.sort { groupService.getCommonName(it.label)}
-          if(groupName != null){
-            speciesGroup(
-              groupName: groupName ? groupName : 'Other',
-              facetName: 'family',
-              groups: array {
-                for (group in groupListSorted) {
-                  speciesGroup(
-                    commonName: groupService.getCommonName(group.label),
-                    scientificName: group.label,
-                    recordCount: group.count
-                  )
-                }
-              }
-            )
-          }
-        }
-        //classes
-        classesGrouped.each() { groupName, groupList ->
-          def groupListSorted = groupList.sort { groupService.getCommonName(it.label)}
-          if(groupName != null){
-            speciesGroup(
-              groupName: groupName ? groupName : 'Other',
-              facetName: 'class',
-              groups: array {
-                for (group in groupListSorted) {
-                  speciesGroup(
-                    commonName: groupService.getCommonName(group.label),
-                    scientificName: group.label,
-                    recordCount: group.count
-                  )
-                }
-              }
-            )
-          }
-        }
-        //classesForCrustacea
-        crustaceanGrouped.each() { groupName, groupList ->
-      //    println("########### rendering: " + groupName)
-          def groupListSorted = groupList.sort { groupService.getCommonName(it.label)}
-          if(groupName != null){
-            speciesGroup(
-                groupName: groupName ? groupName : 'Other',
-                facetName: 'class',
-                groups: array {
-                  for (group in groupListSorted) {
-                    speciesGroup(
-                            commonName: groupService.getCommonName(group.label),
-                            scientificName: group.label,
-                            recordCount: group.count
+            fullResults.each { group, taxa ->
+              speciesGroup (
+                  groupName: group.groupName,
+                  facetName: group.facetName,
+                  groups: array {
+                    for (taxon in taxa) {
+                      def sciName = groupService.commonNameToScientificName.get(taxon.label.trim())
+                      speciesGroup(
+                        commonName: taxon.label,
+                        scientificName: sciName,
+                        recordCount: taxon.count,
+                        imageUrl: "https://m.ala.org.au/multigroupImages/" + sciName?.toLowerCase() + ".jpg",
                     )
-                  }
+                    }
                 }
-            )
-          }
-        }
-        //groups
-        groupsGrouped.each() { groupName, groupList ->
-     //     println("########### rendering: " + groupName)
-          def groupListSorted = groupList.sort { groupService.getCommonName(it.label)}
-          if(groupName != null){
-            speciesGroup(
-              groupName: groupName ? groupName : 'Other',
-              facetName: 'species_group',
-              groups: array {
-                for (group in groupListSorted) {
-                  speciesGroup(
-                    commonName: groupService.getCommonName(group.label),
-                    scientificName: group.label,
-                    recordCount: group.count
-                  )
-                }
-              }
-            )
-          }
-        }
-      };
+              )
+         }
+      }
     }
   }
 }
