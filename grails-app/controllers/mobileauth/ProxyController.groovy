@@ -1,25 +1,20 @@
 package mobileauth
-
-import groovy.json.JsonSlurper
+import grails.converters.JSON
 import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import org.apache.http.HttpResponse
+import org.apache.http.NameValuePair
 import org.apache.http.client.HttpClient
-import org.apache.http.impl.client.DefaultHttpClient
+import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
-import org.apache.http.client.ClientProtocolException
 import org.apache.http.entity.mime.MultipartEntity
 import org.apache.http.entity.mime.content.ByteArrayBody
 import org.apache.http.entity.mime.content.StringBody
-import org.apache.http.HttpResponse
-import org.springframework.web.multipart.MultipartHttpServletRequest
-import org.springframework.web.multipart.MultipartFile
-import org.apache.commons.io.IOUtils
-import org.apache.http.params.HttpParams
-import org.apache.http.params.BasicHttpParams
-import org.apache.http.NameValuePair
+import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.message.BasicNameValuePair
-import org.apache.http.client.entity.UrlEncodedFormEntity
-import grails.converters.JSON
+import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.multipart.MultipartHttpServletRequest
 
 class ProxyController {
 
@@ -50,6 +45,7 @@ class ProxyController {
   }
 
   def submitRecordMultipart(){
+
     log.info("Multipart request received. Proxying to fielddata")
     HttpPost post = new HttpPost(grailsApplication.config.submitMultipartRecordUrl);
 
@@ -61,17 +57,23 @@ class ProxyController {
             nameValuePairs.add(new BasicNameValuePair(k, v[0]))
         }
     }
-    post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
     if(request instanceof MultipartHttpServletRequest){
+        MultipartEntity entity = new MultipartEntity()
+        nameValuePairs.each {it ->
+            entity.addPart(it.name, new StringBody(it.value))
+        }
         Map<String, MultipartFile> fileMap = request.getFileMap()
         if (fileMap.containsKey("attribute_file_1")) {
+
             MultipartFile multipartFile = fileMap.get("attribute_file_1")
-            MultipartEntity entity = new MultipartEntity()
             ByteArrayBody body = new ByteArrayBody(multipartFile.getBytes(), multipartFile.getOriginalFilename())
             entity.addPart("attribute_file_1", body);
             post.setEntity(entity);
         }
+    }
+    else {
+        post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
     }
 
     HttpClient client = new DefaultHttpClient();
