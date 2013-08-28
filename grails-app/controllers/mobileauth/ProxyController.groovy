@@ -182,7 +182,7 @@ class ProxyController {
 
   def exploreSubgroup = {
     def fullUrl = "http://biocache.ala.org.au/ws/occurrences/search?q=*:*&lat=" + params.lat+ "&lon=" + params.lon + "&radius=" + params.radius + "&pageSize=0&facets=species_guid&flimit=2000&fq=species_subgroup:" + URLEncoder.encode(params.subgroup, "UTF-8")
-    println fullUrl
+    log.debug(fullUrl)
     def url = (fullUrl).toURL()
     def slurper = new JsonSlurper()
     def result = slurper.parseText(url.getText())
