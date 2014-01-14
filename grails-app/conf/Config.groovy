@@ -1,17 +1,33 @@
-// locations to search for config files that get merged into the main config
-// config files can either be Java properties files or ConfigSlurper scripts
+/******************************************************************************\
+ *  CONFIG MANAGEMENT
+ \******************************************************************************/
+def appName = 'mobileauth'
+def ENV_NAME = "${appName.toUpperCase()}_CONFIG"
+default_config = "/data/${appName}/config/${appName}-config.properties"
+if(!grails.config.locations || !(grails.config.locations instanceof List)) {
+    grails.config.locations = []
+}
+if(System.getenv(ENV_NAME) && new File(System.getenv(ENV_NAME)).exists()) {
+    println "[${appName}] Including configuration file specified in environment: " + System.getenv(ENV_NAME);
+    grails.config.locations.add "file:" + System.getenv(ENV_NAME)
+} else if(System.getProperty(ENV_NAME) && new File(System.getProperty(ENV_NAME)).exists()) {
+    println "[${appName}] Including configuration file specified on command line: " + System.getProperty(ENV_NAME);
+    grails.config.locations.add "file:" + System.getProperty(ENV_NAME)
+} else if(new File(default_config).exists()) {
+    println "[${appName}] Including default configuration file: " + default_config;
+    grails.config.locations.add "file:" + default_config
+} else {
+    println "[${appName}] No external configuration file defined."
+}
 
-// grails.config.locations = [ "classpath:${appName}-config.properties",
-//                             "classpath:${appName}-config.groovy",
-//                             "file:${userHome}/.grails/${appName}-config.properties",
-//                             "file:${userHome}/.grails/${appName}-config.groovy"]
+println "[${appName}] (*) grails.config.locations = ${grails.config.locations}"
 
-// if (System.properties["${appName}.config.location"]) {
-//    grails.config.locations << "file:" + System.properties["${appName}.config.location"]
-// }
-
-submitRecordUrl = "http://fielddata.ala.org.au/mobile/submitRecord"
-submitMultipartRecordUrl ="http://fielddata.ala.org.au/mobile/submitRecordMultipart"
+if(!submitRecordUrl){
+    submitRecordUrl = "http://fielddata.ala.org.au/mobile/submitRecord"
+}
+if(!submitMultipartRecordUrl){
+    submitMultipartRecordUrl ="http://fielddata.ala.org.au/mobile/submitRecordMultipart"
+}
 
 grails.project.groupId = appName // change this to alter the default package name and Maven publishing destination
 grails.mime.file.extensions = true // enables the parsing of file extensions from URLs into the request format
@@ -29,13 +45,8 @@ grails.mime.types = [ html: ['text/html','application/xhtml+xml'],
                       form: 'application/x-www-form-urlencoded',
                       multipartForm: 'multipart/form-data'
                     ]
-
-// URL Mapping Cache Max Size, defaults to 5000
-//grails.urlmapping.cache.maxsize = 1000
-
 // What URL patterns should be processed by the resources plugin
 grails.resources.adhoc.patterns = ['/images/*', '/css/*', '/js/*', '/plugins/*']
-
 
 // The default codec used to encode data with ${}
 grails.views.default.codec = "none" // none, html, base64
@@ -81,7 +92,7 @@ log4j = {
                 rollingFile name: "mobileauth-prod",
                     maxFileSize: 104857600,
                     file: "/var/log/tomcat6/mobileauth.log",
-                    threshold: org.apache.log4j.Level.DEBUG,
+                    threshold: org.apache.log4j.Level.ERROR,
                     layout: pattern(conversionPattern: "%d [%c{1}]  %m%n")
                 rollingFile name: "stacktrace", maxFileSize: 1024, file: "/var/log/tomcat6/mobileauth-stacktrace.log"
             }
@@ -96,20 +107,32 @@ log4j = {
     }
 
     error  'org.codehaus.groovy.grails.web.servlet',  //  controllers
-           'org.codehaus.groovy.grails.web.pages', //  GSP
-           'org.codehaus.groovy.grails.web.sitemesh', //  layouts
-	         'org.codehaus.groovy.grails.web.mapping.filter', // URL mapping
-           'org.codehaus.groovy.grails.web.mapping', // URL mapping
-	         'org.codehaus.groovy.grails.commons', // core / classloading
-	         'org.codehaus.groovy.grails.plugins', // plugins
-           'org.springframework.jdbc',
-           'org.springframework.transaction',
-           'org.codehaus.groovy',
-           'org.grails',
-           'org.apache',
-           'grails.spring',
-           'grails.util.GrailsUtil',
-           'net.sf.ehcache'
-
+            'org.codehaus.groovy.grails.web.pages', //  GSP
+            'org.codehaus.groovy.grails.web.sitemesh', //  layouts
+            'org.codehaus.groovy.grails.web.mapping.filter', // URL mapping
+            'org.codehaus.groovy.grails.web.mapping', // URL mapping
+            'org.codehaus.groovy.grails.commons', // core / classloading
+            'org.codehaus.groovy.grails.plugins', // plugins
+            'org.codehaus.groovy.grails.orm.hibernate', // hibernate integration
+            'org.springframework',
+            'org.hibernate',
+            'net.sf.ehcache.hibernate',
+            'org.codehaus.groovy.grails.plugins.orm.auditable',
+            'org.mortbay.log', 'org.springframework.webflow',
+            'grails.app',
+            'org.apache',
+            'org',
+            'com',
+            'au',
+            'grails.app',
+            'net',
+            'grails.util.GrailsUtil',
+            'grails.app.service.org.grails.plugin.resource',
+            'grails.app.service.org.grails.plugin.resource.ResourceTagLib',
+            'grails.app',
+            'grails.plugin.springcache',
+            'au.org.ala.cas.client',
+            'grails.spring.BeanBuilder',
+            'grails.plugin.webxml'
     debug  'ala'
 }

@@ -22,6 +22,7 @@ grails.project.dependency.resolution = {
         grailsCentral()
         mavenCentral()
 
+        mavenRepo "http://maven.ala.org.au/repository/"
         // uncomment these to enable remote dependency resolution from public Maven repositories
         //mavenCentral()
         //mavenLocal()
@@ -51,7 +52,7 @@ grails.project.dependency.resolution = {
         runtime ":hibernate:$grailsVersion"
         runtime ":jquery:1.7.1"
         runtime ":resources:1.1.5"
-
+        runtime ":ala-web-theme:0.2.2"
         build ":tomcat:$grailsVersion"
     }
 }

@@ -3,7 +3,7 @@ dataSource {
     driverClassName = "org.h2.Driver"
     username = "sa"
     password = ""
-	dialect = org.hibernate.dialect.MySQLDialect	    
+    dialect = org.hibernate.dialect.MySQLDialect
 }
 hibernate {
     cache.use_second_level_cache = true
@@ -26,23 +26,7 @@ environments {
     }
     production {
         dataSource {
-            dbCreate = "update"
-            driverClassName = "com.mysql.jdbc.Driver"
-            url = "jdbc:mysql://ala-biedb1.vm.csiro.au/mobileauth"
-		    username = "mobileauth"
-		    password = "RHitoHYAbfmJBCT0zywo143tH"   
-		    dialect = org.hibernate.dialect.MySQLDialect		    
-            pooled = true
-            properties {
-               maxActive = -1
-               minEvictableIdleTimeMillis=1800000
-               timeBetweenEvictionRunsMillis=1800000
-               numTestsPerEvictionRun=3
-               testOnBorrow=true
-               testWhileIdle=true
-               testOnReturn=true
-               validationQuery="SELECT 1"
-            }
+            dbCreate = "none"
         }
     }
 }

@@ -12,8 +12,7 @@ class MobileKeyController {
     static allowedMethods = [getKey: "POST", checkKey: "POST"]
 
     /**
-     * Create a key fo
-     * this user.
+     * Create a key for this user.
      */
     def generateKey = {
         log.info("Authenticate request received for....." +params.userName)
@@ -51,8 +50,8 @@ class MobileKeyController {
     }
 
     /**
-       * Check this key combination.
-       */
+     * Check this key combination.
+     */
     def checkKey = {
         //check the user, check the auth key
         log.info("Check key request received for....." +params.userName + ", key: " + params.authKey)

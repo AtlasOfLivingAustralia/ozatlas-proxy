@@ -14,17 +14,17 @@ class GroupService implements InitializingBean {
 
   public void afterPropertiesSet() throws Exception {
       speciesGroups.each { group ->
-
-        Group newGroup = new Group([groupName:group.speciesGroup, facetName:group.taxonRank])
-
+        log.debug("Groups initialising: " + group.speciesGroup)
+        def facetName = group.taxonRank ? group.taxonRank : group.facetName
+        Group newGroup = new Group([groupName:group.speciesGroup, facetName:facetName])
         group.taxa.each { taxon ->
-          println(taxon.name + " => " + taxon.common)
-
+          log.debug(taxon.name + " => " + taxon.common)
           groupMap[taxon.name.trim().toLowerCase()] = group.speciesGroup.trim()
           scientificNameToCommonName[taxon.name.trim().toLowerCase()] = taxon.common.trim()
           commonNameToScientificName[taxon.common.trim()] = taxon.name.trim()
           commonNameToGroup.put(taxon.common.trim(), newGroup)
         }
+
       }
   }
 

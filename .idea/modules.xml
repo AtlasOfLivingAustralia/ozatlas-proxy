@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Mobileauth.iml" filepath="$PROJECT_DIR$/Mobileauth.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Mobileauth-grailsPlugins.iml" filepath="$PROJECT_DIR$/Mobileauth-grailsPlugins.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mobileauth.iml" filepath="$PROJECT_DIR$/mobileauth.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mobileauth-grailsPlugins.iml" filepath="$PROJECT_DIR$/mobileauth-grailsPlugins.iml" />
     </modules>
   </component>
 </project>
