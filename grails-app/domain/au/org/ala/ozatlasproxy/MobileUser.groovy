@@ -1,4 +1,4 @@
-package mobileauth
+package au.org.ala.ozatlasproxy
 
 class MobileUser {
 

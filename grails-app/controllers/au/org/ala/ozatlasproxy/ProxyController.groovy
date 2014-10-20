@@ -1,4 +1,4 @@
-package mobileauth
+package au.org.ala.ozatlasproxy
 import grails.converters.JSON
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper

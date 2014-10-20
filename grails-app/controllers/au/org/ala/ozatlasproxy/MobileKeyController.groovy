@@ -1,5 +1,7 @@
-package mobileauth
+package au.org.ala.ozatlasproxy
 
+import au.org.ala.ozatlasproxy.AuthKey
+import au.org.ala.ozatlasproxy.MobileUser
 import org.apache.http.client.HttpClient;
 import org.apache.http.NameValuePair
 import org.apache.http.impl.client.DefaultHttpClient
@@ -28,10 +30,10 @@ class MobileKeyController {
             def alaAuthResponse = http.execute(post)
             int statusCode = alaAuthResponse.getStatusLine().getStatusCode();
             //println("CAS response: " + statusCode)
-          //  println(alaAuthResponse.getStatusLine().getReasonPhrase());
+            //println(alaAuthResponse.getStatusLine().getReasonPhrase());
             if (statusCode == 201) {
                 //persist the key
-               // println("Sending a 201 to client.....")
+                //println("Sending a 201 to client.....")
                 String authKey = UUID.randomUUID().toString()
                 //add the user and auth key
                 MobileUser user = MobileUser.findByUserName(userName)

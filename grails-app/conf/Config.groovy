@@ -1,7 +1,7 @@
 /******************************************************************************\
  *  CONFIG MANAGEMENT
  \******************************************************************************/
-def appName = 'mobileauth'
+def appName = 'ozatlas-proxy'
 def ENV_NAME = "${appName.toUpperCase()}_CONFIG"
 default_config = "/data/${appName}/config/${appName}-config.properties"
 if(!grails.config.locations || !(grails.config.locations instanceof List)) {
@@ -76,7 +76,7 @@ grails.hibernate.cache.queries = true
 environments {
     development {
         grails.logging.jul.usebridge = true
-        grails.serverURL = "http://localhost:8080/mobileauth"
+        grails.serverURL = "http://localhost:8080/ozatlasproxy"
     }
     production {
         grails.logging.jul.usebridge = false
@@ -89,12 +89,12 @@ log4j = {
     appenders {
         environments {
             production {
-                rollingFile name: "mobileauth-prod",
+                rollingFile name: "ozatlas-proxy-prod",
                     maxFileSize: 104857600,
-                    file: "/var/log/tomcat6/mobileauth.log",
+                    file: "/var/log/tomcat6/ozatlas-proxy.log",
                     threshold: org.apache.log4j.Level.ERROR,
                     layout: pattern(conversionPattern: "%d [%c{1}]  %m%n")
-                rollingFile name: "stacktrace", maxFileSize: 1024, file: "/var/log/tomcat6/mobileauth-stacktrace.log"
+                rollingFile name: "stacktrace", maxFileSize: 1024, file: "/var/log/tomcat6/ozatlas-proxy-stacktrace.log"
             }
             development{
                 console name: "stdout", layout: pattern(conversionPattern: "%d [%c{1}]  %m%n"), threshold: org.apache.log4j.Level.DEBUG
@@ -103,7 +103,7 @@ log4j = {
     }
 
     root {
-        debug  'mobileauth-prod'
+        debug  'ozatlas-proxy-prod'
     }
 
     error  'org.codehaus.groovy.grails.web.servlet',  //  controllers
