@@ -221,7 +221,10 @@ class ProxyController {
     response.setContentType("application/json")
     def slurper = new JsonSlurper()
     def result = slurper.parseText(url.getText())
-    def speciesGroups = result.facetResults[0].fieldResult
+    def speciesGroups = []
+    if(result.facetResults){
+        speciesGroups = result.facetResults[0].fieldResult
+    }
 
     def fullResults = [:]
 
