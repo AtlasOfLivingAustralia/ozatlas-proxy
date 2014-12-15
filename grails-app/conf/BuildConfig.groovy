@@ -37,6 +37,7 @@ grails.project.dependency.resolution = {
         runtime 'org.apache.httpcomponents:httpmime:4.1.2'
         build 'org.apache.commons:commons-lang3:3.1'
         runtime 'org.apache.commons:commons-lang3:3.1'
+        runtime 'org.grails.plugins:cors:1.1.6'
     }
 
     plugins {
