@@ -18,6 +18,9 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 
 class ProxyController {
 
+  public static final def API_KEY_PARAM = "apiKey"
+  public static final def DATA_RESOURCE_ID_PARAM = "drId"
+
   def grailsApplication
 
   def groupService
@@ -25,6 +28,13 @@ class ProxyController {
   def submitRecord(){
     log.info("Request received. Proxying to fielddata")
     def parameterMap = request.getParameterMap()
+
+    if (parameterMap[API_KEY_PARAM]) {
+        def drId = getDataResourceId(parameterMap[API_KEY_PARAM])
+        if (drId) {
+            parameterMap << [(DATA_RESOURCE_ID_PARAM): drId]
+        }
+    }
 
     //do the http POST
     HttpClient http = new DefaultHttpClient()
@@ -50,6 +60,14 @@ class ProxyController {
     HttpPost post = new HttpPost(grailsApplication.config.submitMultipartRecordUrl);
 
     def parameterMap = request.getParameterMap()
+
+    if (parameterMap[API_KEY_PARAM]) {
+        def drId = getDataResourceId(parameterMap[API_KEY_PARAM])
+        if (drId) {
+            parameterMap << [(DATA_RESOURCE_ID_PARAM): drId]
+        }
+    }
+
     def nameValuePairs = new ArrayList<NameValuePair>();
     parameterMap.each {k, v ->
         if (v) {
@@ -115,11 +133,11 @@ class ProxyController {
     response.setContentType("application/json")
     render url.getText()
   }
-  
+
   def exploreGroups = {
     def url = ("http://biocache.ala.org.au/ws/explore/groups.json?fq=geospatial_kosher%3Atrue&facets=species_group&lat=" + params.lat+ "&lon="+params.lon + "&radius="+params.radius).toURL()
     response.setContentType("application/json")
-    render url.getText()    
+    render url.getText()
   }
 
   def search = {
@@ -263,4 +281,18 @@ class ProxyController {
       }
     }
   }
+
+    private def getDataResourceId(apiKey) {
+        def key = ApiKey.findByApiKey(apiKey)
+
+        def drId = null
+        if (key) {
+            drId = key.getDataResourceId()
+            log.info "Data Resource UID ${drId} found for API key ${apiKey}"
+        } else {
+            log.warn "Unrecognised API Key ${apiKey}"
+        }
+
+        drId
+    }
 }
