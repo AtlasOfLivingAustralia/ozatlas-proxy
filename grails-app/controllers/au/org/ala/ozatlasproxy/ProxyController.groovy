@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 class ProxyController {
 
   public static final def API_KEY_PARAM = "apiKey"
-  public static final def DATA_RESOURCE_ID_PARAM = "drId"
+  public static final def DATA_RESOURCE_ID_PARAM = "dataResourceUid"
 
   def grailsApplication
 
