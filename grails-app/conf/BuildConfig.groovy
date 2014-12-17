@@ -14,7 +14,7 @@ grails.project.dependency.resolution = {
         // uncomment to disable ehcache
         // excludes 'ehcache'
     }
-    log "error" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
+    log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
     checksums true // Whether to verify checksums on resolve
 
     repositories {
@@ -37,10 +37,10 @@ grails.project.dependency.resolution = {
         runtime 'org.apache.httpcomponents:httpmime:4.1.2'
         build 'org.apache.commons:commons-lang3:3.1'
         runtime 'org.apache.commons:commons-lang3:3.1'
-        runtime 'org.grails.plugins:cors:1.1.6'
     }
 
     plugins {
+        runtime ":cors:1.1.6"
         runtime ":hibernate:$grailsVersion"
         runtime ":jquery:1.7.1"
         runtime ":resources:1.1.5"
