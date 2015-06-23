@@ -45,12 +45,12 @@ class ProxyController {
      */
     private def mapLegacyRecordParam(userDetails, params) {
         params.each { log.debug("Received params: ${it}") }
-        def dateString = params.date
+        def dateString = params.date ?: params.eventDate
         def time = params.time
-        def taxonId = params.taxonID
-        def taxonName = params.survey_species_search
+        def taxonId = params.taxonID ?: params.taxonConceptID
+        def taxonName = params.survey_species_search ?: params.scientificName
         def number = params.number
-        def accuracyInMeters = params.accuracyInMeters
+        def accuracyInMeters = params.accuracyInMeters ?: params.coordinateUncertaintyInMeters
         def coordinatePrecision = params.coordinatePrecision
         def imageLicence = params.imageLicence
 
