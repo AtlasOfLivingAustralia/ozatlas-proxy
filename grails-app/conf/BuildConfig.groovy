@@ -41,10 +41,10 @@ grails.project.dependency.resolution = {
 
     plugins {
         runtime ":cors:1.1.6"
-        runtime ":hibernate:$grailsVersion"
-        runtime ":jquery:1.7.1"
-        runtime ":resources:1.1.5"
-        runtime ":ala-web-theme:0.2.2"
-        build ":tomcat:$grailsVersion"
+        runtime ":hibernate:3.6.10.19"
+        runtime ":ala-auth:1.3.1"
+        runtime ":ala-bootstrap2:2.2"
+        runtime ":release:3.0.1"
+        build ':tomcat:7.0.54'
     }
 }

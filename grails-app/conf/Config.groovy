@@ -22,12 +22,9 @@ if(System.getenv(ENV_NAME) && new File(System.getenv(ENV_NAME)).exists()) {
 
 println "[${appName}] (*) grails.config.locations = ${grails.config.locations}"
 
-if(!submitRecordUrl){
-    submitRecordUrl = "http://fielddata.ala.org.au/mobile/submitRecord"
-}
-if(!submitMultipartRecordUrl){
-    submitMultipartRecordUrl ="http://fielddata.ala.org.au/mobile/submitRecordMultipart"
-}
+submitRecordUrl = "http://fielddata.ala.org.au/mobile/submitRecord"
+submitMultipartRecordUrl ="http://fielddata.ala.org.au/mobile/submitRecordMultipart"
+ecodata.apiKey = "xxxxxxxxxxxx"
 
 grails.project.groupId = 'au.org.ala' // change this to alter the default package name and Maven publishing destination
 grails.mime.file.extensions = true // enables the parsing of file extensions from URLs into the request format
@@ -84,55 +81,51 @@ environments {
     }
 }
 
-// log4j configuration
+def loggingDir = (System.getProperty('catalina.base') ? System.getProperty('catalina.base') + '/logs'  : '/var/log/tomcat6')
+if(!(new File(loggingDir).exists())){
+    loggingDir = "/tmp"
+}
+
+println("[${appName}] Logging to directory: " + loggingDir)
+
+/* log4j configuration */
 log4j = {
+    // Example of changing the log pattern for the default console
     appenders {
         environments {
             production {
-                rollingFile name: "ozatlas-proxy-prod",
-                    maxFileSize: 104857600,
-                    file: "/var/log/tomcat6/ozatlas-proxy.log",
-                    threshold: org.apache.log4j.Level.ERROR,
-                    layout: pattern(conversionPattern: "%d [%c{1}]  %m%n")
-                rollingFile name: "stacktrace", maxFileSize: 1024, file: "/var/log/tomcat6/ozatlas-proxy-stacktrace.log"
+                rollingFile name: "tomcatLog",
+                        maxFileSize: '1MB',
+                        file: "${loggingDir}/${appName}.log",
+                        threshold: org.apache.log4j.Level.DEBUG,
+                        layout: pattern(conversionPattern: "%d %-5p [%c{1}] %m%n")
             }
-            development{
-                console name: "stdout", layout: pattern(conversionPattern: "%d [%c{1}]  %m%n"), threshold: org.apache.log4j.Level.DEBUG
+            development {
+                console name: "stdout", layout: pattern(conversionPattern: "%d %-5p [%c{1}] %m%n"), threshold: org.apache.log4j.Level.DEBUG
+            }
+            test {
+                rollingFile name: "stdout,tomcatLog",
+                        maxFileSize: '1MB',
+                        file: "/tmp/${appName}",
+                        threshold: org.apache.log4j.Level.DEBUG,
+                        layout: pattern(conversionPattern: "%d %-5p [%c{1}] %m%n")
             }
         }
     }
-
     root {
-        debug  'ozatlas-proxy-prod'
+    // change the root logger to my tomcatLog file
+        error 'tomcatLog'
+        warn 'tomcatLog'
+        additivity = true
     }
 
-    error  'org.codehaus.groovy.grails.web.servlet',  //  controllers
-            'org.codehaus.groovy.grails.web.pages', //  GSP
-            'org.codehaus.groovy.grails.web.sitemesh', //  layouts
-            'org.codehaus.groovy.grails.web.mapping.filter', // URL mapping
-            'org.codehaus.groovy.grails.web.mapping', // URL mapping
-            'org.codehaus.groovy.grails.commons', // core / classloading
-            'org.codehaus.groovy.grails.plugins', // plugins
-            'org.codehaus.groovy.grails.orm.hibernate', // hibernate integration
-            'org.springframework',
-            'org.hibernate',
-            'net.sf.ehcache.hibernate',
-            'org.codehaus.groovy.grails.plugins.orm.auditable',
-            'org.mortbay.log', 'org.springframework.webflow',
-            'grails.app',
-            'org.apache',
-            'org',
-            'com',
-            'au',
-            'grails.app',
-            'net',
-            'grails.util.GrailsUtil',
-            'grails.app.service.org.grails.plugin.resource',
-            'grails.app.service.org.grails.plugin.resource.ResourceTagLib',
-            'grails.app',
-            'grails.plugin.springcache',
-            'au.org.ala.cas.client',
+    warn    'au.org.ala.cas.client',
             'grails.spring.BeanBuilder',
-            'grails.plugin.webxml'
-    debug  'ala'
+            'grails.plugin.webxml',
+            'grails.plugin.cache.web.filter',
+            'grails.app.services.org.grails.plugin.resource',
+            'grails.app.taglib.org.grails.plugin.resource',
+            'grails.app.resourceMappers.org.grails.plugin.resource'
+
+    debug 'grails.app', 'au.org.ala.ozatlasproxy'
 }

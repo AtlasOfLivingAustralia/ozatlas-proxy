@@ -1,7 +1,5 @@
 package au.org.ala.ozatlasproxy
 
-import au.org.ala.ozatlasproxy.AuthKey
-import au.org.ala.ozatlasproxy.MobileUser
 import org.apache.http.client.HttpClient;
 import org.apache.http.NameValuePair
 import org.apache.http.impl.client.DefaultHttpClient
@@ -9,6 +7,9 @@ import org.apache.http.message.BasicNameValuePair
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 
+/**
+ * Provides a mechanism to authenticate mobile clients
+ */
 class MobileKeyController {
 
     static allowedMethods = [getKey: "POST", checkKey: "POST"]
@@ -29,11 +30,8 @@ class MobileKeyController {
 
             def alaAuthResponse = http.execute(post)
             int statusCode = alaAuthResponse.getStatusLine().getStatusCode();
-            //println("CAS response: " + statusCode)
-            //println(alaAuthResponse.getStatusLine().getReasonPhrase());
             if (statusCode == 201) {
                 //persist the key
-                //println("Sending a 201 to client.....")
                 String authKey = UUID.randomUUID().toString()
                 //add the user and auth key
                 MobileUser user = MobileUser.findByUserName(userName)
@@ -56,15 +54,11 @@ class MobileKeyController {
      */
     def checkKey = {
         //check the user, check the auth key
-        log.info("Check key request received for....." +params.userName + ", key: " + params.authKey)
-        //println("Check record for...." + params.userName + " with key " + params.authKey)
+        log.info("Check key request received for.....${params.userName} , key: ${params.authKey}")
         MobileUser user = MobileUser.findByUserName(params.userName)
-       // println(user)
-
         AuthKey authKey = AuthKey.findByKeyAndMobileUser(params.authKey, user)
         if (authKey == null) {
-         //   println("Unable to add an observation.")
-            log.info("Sending error for check key requets. Key combination not recognised")
+            log.info("Sending error for check key request. Key combination not recognised.")
             response.sendError(403)
         }
     }
