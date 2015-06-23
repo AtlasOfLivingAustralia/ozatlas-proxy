@@ -35,6 +35,7 @@ class ProxyController {
     def groupService, authService
 
     static dateFormats = ["yyyy-MM-dd", "yyyy/MM/dd", "dd MMM yyyy", "dd-MM-yyyy", "dd/MM/yyyy", "dd/MM/yy"].toArray(new String[0])
+    static dateTimeFormats = ["yyyy-MM-dd'T'HH:mm", "yyyy/MM/dd'T'HH:mm", "dd MMM yyyy'T'HH:mm", "dd-MM-yyyy'T'HH:mm", "dd/MM/yyyy'T'HH:mm", "dd/MM/yy'T'HH:mm"].toArray(new String[0])
 
     /**
      * Handle the mapping from old -> darwin core terms.
@@ -57,9 +58,16 @@ class ProxyController {
         // Convert date to desired format
         def dateToUse = {
             try {
-                SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
-                Date date = DateUtils.parseDate(dateString, dateFormats);
-                dateFormatter.format(date)
+                if(time && dateString){
+                    //combine them and parse
+                    SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+                    Date date = DateUtils.parseDate(dateString + "T" + time, dateTimeFormats);
+                    dateFormatter.format(date)
+                } else {
+                    SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+                    Date date = DateUtils.parseDate(dateString, dateFormats);
+                    dateFormatter.format(date)
+                }
             } catch (IllegalArgumentException ex) {
                 log.debug("no date supplied: " + dateString)
                 null
@@ -74,7 +82,6 @@ class ProxyController {
         def recordParams = [
                 userId                       : userDetails.userId,
                 eventDate                    : dateToUse,
-                eventTime                    : time,
                 taxonConceptID               : taxonId,
                 scientificName               : taxonName,
                 family                       : params.family,
